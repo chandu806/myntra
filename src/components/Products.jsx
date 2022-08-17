@@ -1,570 +1,333 @@
-import "./Products.css";
-import axios from "axios";
-import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import "./Payment.css"
+import styled from "styled-components";
+import {createContext, useEffect, useReducer, useState} from "react";
+import {Navigate, useNavigate} from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { getProduct, getProductData, getProductLoading} from "../redux/Products/action";
-import {getCartData} from '../redux/Cart/action';
-import { Store } from "@mui/icons-material";
-import { usePagination } from "use-pagination-hook";
+import { Scrollbars } from "react-custom-scrollbars-2";
+import Items from "./Items";
+import ContextCart from "./ContextCart";
+import reducer from "./reducer";
+import axios from "axios";
+import { deccreaseQty, getCartData, increaseQty } from "../redux/Cart/action";
+import { Link } from "react-router-dom";
+
+
+const Main = styled.div`
+width: 50%;
+height: 350px;
+border: 1px solid lightgrey;
+padding: 1%;
+display: flex;
+flex-direction: column;
+margin: 25px auto;
+`
+export const CartContext = createContext();
 
 
 
-export const Products = () => {
-    // export const addData = (data) => {
-    //     // console.log("I'm here")
-    //     setProductData(data)
-    //     // dispatch(addProduct(res.data))
-    // }
+export const Payment = () => {
+  const [card, setCard] = useState({
+    email: "", 
+    pin : "",
+    country : "India", 
+    firstName: "",
+    lastName: "",
+    address: "",
+    city: "",
+    state: "",
+    phone: "",
+    cardNumber:"",
+    name: "",
+    cvv: "",
+    date: ""
+  });
 
-    const [productData, setProductData] = useState([]);
-    // const [page, setPage] = useState(1);
-    const [tick, setTick] = useState(false)
-    const [brandfilter, setBrandfilter] = useState(false)
-    const [pricefilter, setPricefilter] = useState(false)
-    const [test, setTest] = useState(true)
-    const [disc, setDisc] = useState(false)
-    const [category, setCategory] = useState(false)
-    
-    const [search, setSearch] = useState("");
-    let cat = 0
-    
-    const dispatch = useDispatch();
-    const {products, loading, error} = useSelector((store) => store.products);
-    console.log(loading, error)
+  const [data, setData] = useState([])
+  const dispatch = useDispatch()
+  const navigate = useNavigate();
 
+//   const dispatch = useDispatch();
+    console.log("Payement Data: ", data)
 
-    const check = () => {
-        if(test) {
-            return products
-        }else {
-            return productData
-        }
-    }
+  const cart = useSelector((store) => store.cart.cart);
+  console.log("CArt in cartpage: ", cart)
+  const isAuth = useSelector((store) => store.SignIn.isAuth)
+  console.log("IsAuth", isAuth)
 
-    const { current, pages, display, next, previous } = usePagination({ items: check(), size: 20 });
-
-    console.log(" Stored Products ", products);
-    const cart = useSelector((store) => store.cart.cart);
-
-    console.log("Cart: ", cart.id)
-
+  const [showMenu,setShowMenu] = useState(false)
+  const initialState = {
+    item: cart
+  };
+  
     useEffect(() => {
-        getData();
-        getCart();
-        // callBack()
-    },[]);
-
-
-
-   
-
-    const getData = () => {
-        dispatch(getProductData())
-    }
-
-    console.log("DAta:", productData)
-
-
-   const sorting = (e) => {
-       setTest(false)
-        const sorting = e.target.value;
-        if(tick == false){
-
-            const sortRes = [...products].sort((a, b) => {
-                if (sorting === "low") {
-                    return a.price > b.price ? 1 : -1;
-                }
-    
-                if (sorting === "high") {
-                    return a.price < b.price ? 1 : -1;
-                }
-    
-                if (sorting === "rating") {
-                     return a.ratings < b.ratings ? 1 : -1;
-                }
-            })
-    
-            setProductData(sortRes)
-        }
-        else if(tick == true){
-
-            const sortRes = [...productData].sort((a, b) => {
-                if (sorting === "low") {
-                    return a.price > b.price ? 1 : -1;
-                }
-    
-                if (sorting === "high") {
-                    return a.price < b.price ? 1 : -1;
-                }
-    
-                if (sorting === "rating") {
-                     return a.ratings < b.ratings ? 1 : -1;
-                }
-            })
-    
-            setProductData(sortRes)
-        }
-   }
-
-   const filterBrand = (e) => {
-    setTest(false)
-    const brand = e.target.value;
-    console.log(e.target.value)
-    if(tick == false){
-        if(brand == "all"){
-        
-            setProductData(products)
-        }else {
-            const filterData = products.filter((e) => e.brand === brand);
-            setProductData(filterData)
-        }
-    }
-    else {
-
-        if(brand == "all"){
-            
-            setProductData(productData)
-        }else {
-            const filterData = productData.filter((e) => e.brand === brand);
-            setProductData(filterData)
-        }
-    }
-    // if(brandfilter === false){
-    //     setProductData(filterData)
-    //     setBrandfilter(true)
-    // }else {
-    //     setProductData([...productData, ...filterData]);
-    // }
-}
-const filterDiscount = (e) => {
-    
-    setTest(false)
-    const discount = e.target.value;
-    console.log(e.target.value)
-    if(tick == false){
-        // if(disc == false){
-        //     const filterData = [...products].filter((e) => e.discount >= discount);
-        //     console.log("DIs: ", filterData)
-        //     setProductData(filterData)
-        //     setDisc(true)
-        // }
-        // else {
-        //     const filterData = [...productData].filter((e) => e.discount >= discount);
-        //     console.log("DIs: ", filterData)
-        //     setProductData([...productData, ...filterData])
-        // }
-        const filterData = products.filter((e) => Number(e.discount) >= discount);
-        console.log("DIs: ", filterData)
-        setProductData(filterData)
-        setDisc(true)
-
-    }
-    else{
-
-        if(disc == false){
-            const filterData = [...productData].filter((e) => Number(e.discount) >= discount);
-            console.log("DIs: ", filterData)
-            setProductData(filterData)
-            setDisc(true)
-        }
-        else {
-            const filterData = [...products].filter((e) => Number(e.discount) >= discount);
-            console.log("DIs: ", filterData)
-            setProductData([...productData, ...filterData])
-        }
-    }
-    setTick(true)
-}
-const callBack  = ()=>{
-    handleCheckedMen()
-    handleCheckedGirls()
-    handleCheckedKids()
-    handleCheckedWomen()
-}
-
-    const handleCheckedMen = (e) => {
-
-        setTest(false)
-        console.log(e.target.value)
-    if (e.target.checked) {
-            const rows = [...products].filter((row) => row.gender === "Men");
-            if(tick === false){
-                setProductData(rows)
-                setTick(true)
-            }else {
-                const row = [...productData].filter((row) => row.gender === "Men");
-                if(category  == false){
-                    setProductData(row);
-                }
-                else{
-                    const filt = [...products].filter((row) => row.gender === "Men");
-                    setProductData([...productData, ...filt]);
-                }
-            }
-            setCategory(true)
-            setTick(true)
-            cat++
-        }
-        else {
-            cat--
-            if(cat <= 0){
-                
-                setProductData(products)
-                // setTick(false)
-            }
-            // else{
-            //     const filt = [...products].filter((row) => row.gender === "Men");
-            //     setProductData([...productData, ...filt]);
-            // }
-        }
-    };
-
-    const handleCheckedWomen = (e) => {
-        setTest(false)
-        console.log(e.target.value)
-        if (e.target.checked) {
-            const rows = [...products].filter((row) => row.gender === "Women");
-            if(tick === false){
-                setProductData(rows)
-                setTick(true)
-            }else {
-                const row = [...productData].filter((row) => row.gender === "Women");
-                if(category  == false){
-                    setProductData(row);
-                }
-                else{
-                    const filt = [...products].filter((row) => row.gender === "Women");
-                    setProductData([...productData, ...filt]);
-                }
-            }
-            setCategory(true)
-            setTick(true)
-            cat++
-        }
-        else {
-            cat--
-            if(cat <= 0){
-                
-                setProductData(products)
-                // setTick(false)
-            }
-            // else{
-            //     const filt = [...products].filter((row) => row.gender === "Women");
-            //     setProductData([...productData, ...filt]);
-            // }
-        }
-        // if (e.target.checked) {
-        //     const rows = [...products].filter((row) => row.gender === "Women");
-        //     if(tick == false){
-        //         setProductData(rows)
-        //         setTick(true)
-        //     }else {
-        //         setProductData([...productData, ...rows]);
-        //     }
-        // }
-    }
-
-    const handleCheckedKids = (e) => {
-        setTest(false)
-        console.log(e.target.value)
-        if (e.target.checked) {
-            const rows = [...products].filter((row) => row.gender === "Boys");
-            if(tick === false){
-                setProductData(rows)
-                setTick(true)
-            }else {
-                const row = [...productData].filter((row) => row.gender === "Boys");
-                if(category  == false){
-                    setProductData(row);
-                }
-                else{
-                    const filt = [...products].filter((row) => row.gender === "Boys");
-                    setProductData([...productData, ...filt]);
-                }
-            }
-            setCategory(true)
-            setTick(true)
-            cat++
-        }
-        else {
-            cat--
-            if(cat <= 0){
-                
-                setProductData(products)
-                // setTick(false)
-                
-            }
-            // else{
-            //     const filt = [...products].filter((row) => row.gender === "Boys");
-            //     setProductData([...productData, ...filt]);
-            // }
-        }
-    }
-
-     const handleCheckedGirls = (e) => {
-        setTest(false)
-        console.log(e.target.value)
-        if (e.target.checked) {
-            const rows = [...products].filter((row) => row.gender === "Girls");
-            if(tick === false){
-                setProductData(rows)
-                setTick(true)
-            }else {
-                const row = [...productData].filter((row) => row.gender === "Girls");
-                if(category  == false){
-                    setProductData(row);
-                }
-                else{
-                    const filt = [...products].filter((row) => row.gender === "Girls");
-                    setProductData([...productData, ...filt]);
-                }
-            }
-            setCategory(true)
-            setTick(true)
-            cat++
-        }
-        else {
-            cat--
-            if(cat <= 0){
-                
-                setProductData(products)
-                
-            }
-            // else{
-            //     const filt = [...products].filter((row) => row.gender === "Girls");
-            //     setProductData([...productData, ...filt]);
-            // }
-        }
-    }
-
-    const handleOne = (e) => {
-        setTest(false)
-         if (e.target.checked) {
-             if(tick == false){
-                 const rows = [...products].filter((row) => row.price > 0 && row.price <= 1000);
-                 if(pricefilter == false){
-                    setProductData(rows)
-                    setPricefilter(true)
-                }else {
-                    setProductData([...productData, ...rows]);
-                }
-             }else{
-                 const rows = [...productData].filter((row) => row.price > 0 && row.price <= 1000);
-                 if(pricefilter == false){
-                    setProductData(rows)
-                    setPricefilter(true)
-                }else {
-                    const rows = [...products].filter((row) => row.price > 0 && row.price <= 1000);
-                    setProductData([...productData, ...rows]);
-                }
-
-             }
-             setTick(true)
-         }
-    }
-
-    const handleTwo = (e) => {
-        setTest(false)
-        if (e.target.checked) {
-            if(tick == false){
-                const rows = [...products].filter((row) => row.price > 1000 && row.price <= 1500);
-                if(pricefilter == false){
-                   setProductData(rows)
-                   setPricefilter(true)
-               }else {
-                   setProductData([...productData, ...rows]);
-               }
-            }else{
-                const rows = [...productData].filter((row) => row.price > 1000 && row.price <= 1500);
-                if(pricefilter == false){
-                   setProductData(rows)
-                   setPricefilter(true)
-               }else {
-                   const rows = [...products].filter((row) => row.price > 1000 && row.price <= 1500);
-                   setProductData([...productData, ...rows]);
-               }
-
-            }
-            setTick(true)
-        }
-    }
-
-      const handleThree = (e) => {
-        setTest(false)
-        if (e.target.checked) {
-            if(tick == false){
-                const rows = [...products].filter((row) => row.price > 1500 && row.price <= 2000);
-                if(pricefilter == false){
-                   setProductData(rows)
-                   setPricefilter(true)
-               }else {
-                   setProductData([...productData, ...rows]);
-               }
-            }else{
-                const rows = [...productData].filter((row) => row.price > 1500 && row.price <= 2000);
-                if(pricefilter == false){
-                   setProductData(rows)
-                   setPricefilter(true)
-               }else {
-                   const rows = [...products].filter((row) => row.price > 1500 && row.price <= 2000);
-                   setProductData([...productData, ...rows]);
-               }
-
-            }
-            setTick(true)
-        }
-    }
-
-      const handleFour = (e) => {
-        setTest(false)
-        if (e.target.checked) {
-            if(tick == false){
-                const rows = [...products].filter((row) => row.price > 2000 && row.price <= 2500);
-                if(pricefilter == false){
-                   setProductData(rows)
-                   setPricefilter(true)
-               }else {
-                   setProductData([...productData, ...rows]);
-               }
-            }else{
-                const rows = [...productData].filter((row) => row.price > 2000 && row.price <= 2500);
-                if(pricefilter == false){
-                   setProductData(rows)
-                   setPricefilter(true)
-               }else {
-                   const rows = [...products].filter((row) => row.price > 2000 && row.price <= 2500);
-                   setProductData([...productData, ...rows]);
-               }
-
-            }
-            setTick(true)
-        }
-    }
-
-    const getCart = () => {
         dispatch(getCartData())
-    }
+    },[])
 
-    const addCartItem = (e) =>{
-        console.log("ADDED", e)
-        // dispatch(addCart(e))
 
-        axios.post("https://myntra-updated.herokuapp.com/cart", e).then(() => getCart())
-    }
-    // loading ? ("Loading...."): error ?("Error Occured") :
 
-    return  (
-        <div className="mainDiv">
-            <div style={{marginLeft:"2%",lineHeight:"1px"}}>
-                <p style={{fontSize:"18px"}}>Home</p>
-                <p style={{ fontSize: "18px", fontWeight: "700" }}>Myntra Fashion Store<span style={{ color: "grey", fontWeight: "400" }}>- {products.length} items</span></p>
-                <div style={{display: "flex"}}>
-                    <p className="filters">FILTERS</p>
-                    <select className="selectBtn" onChange={sorting}>
-                        <option>Select</option>
-                        <option value="low">Price : Low to High</option>
-                        <option value="high">Price : High to Low</option>
-                        <option value="rating">Customer Rating</option>
-                    </select>
-                    <input style={{ marginLeft:"2%",width:"16%",height:"35px",marginTop:"15px" }} type="text" placeholder="Search product here" onChange={(e)=>setSearch(e.target.value)}/>
-                    <div className="btnDivpage">
-                        <button className="prevBtn" disabled={current === 1} onClick={previous}>Prev</button>
-                        <p className="pageNum">{current}</p>
-                        <button className="nextBtn" disabled={current === pages} onClick={next}>Next</button>
-                    </div>
-                </div>
-            </div>
-            <hr/>
-            <div className="prodctDiv">
-                <div className="leftDiv">
-                    <div className="checkDiv">
-                         <input type="checkbox" onChange={handleCheckedMen} /><label>Men</label>
-                        <br/>
-                        <input type="checkbox" onChange={handleCheckedWomen}  /><label>Women</label>
-                        <br/>
-                        <input type="checkbox" onChange={handleCheckedKids} /><label>Boys</label>
-                        <br/>
-                        <input type="checkbox" onChange={handleCheckedGirls}/><label>Girls</label>
-                   </div>
-                    <hr />
-                    <div className="checkDiv1">
-                        <h4>PRICE</h4>
-                         <input type="checkbox" onChange={handleOne} /><label>RS. 0 to RS.1000</label>
-                        <br/>
-                        <input type="checkbox" onChange={handleTwo}/><label>RS. 1001 to RS.1500</label>
-                        <br/>
-                        <input type="checkbox" onChange={handleThree}/><label>Rs. 1501 to Rs.2000</label>
-                        <br/>
-                        <input type="checkbox" onChange={ handleFour}/><label>RS.2001 to RS.2500</label>
-                    </div>
-                    <hr/>
-                      <div className="checkDiv1">
-                        <h4>BRAND</h4>
-                         <input type="checkbox" value = "H&M" onChange={filterBrand}/><label>H&M</label>
-                        <br/>
-                        <input type="checkbox" value = "all" onChange={filterBrand}/><label>All Brands</label>
-                        {/* <br/>
-                        <input type="checkbox" value = "LOreal" onChange={filterBrand}/><label>LOreal</label>
-                        <br/>
-                        <input type="checkbox" value = "TNW" onChange={filterBrand} /><label>TNW</label>
-                         <br/>
-                        <input type="checkbox" value = "CORE" onChange={filterBrand}/><label>CORE</label>
-                         <br/>
-                        <input type="checkbox"/><label>HRX</label>
-                         <br/>
-                        <input type="checkbox"/><label>Khadi Bhandar</label>
-                         <br/>
-                        <input type="checkbox" /><label>Myntra Super</label>
-                         <br/>
-                        <input type="checkbox"/><label>OneX</label> */}
-                    </div>
-                    <hr/>
-                      <div className="checkDiv1">
-                        <h5>DISCOUNT RANGE</h5>
-                         <input type="checkbox" value = {10} onChange={filterDiscount}/><label>10% and above</label>
-                        <br/>
-                        <input type="checkbox" value = {20} onChange={filterDiscount} /><label>20% and above</label>
-                        <br/>
-                        <input type="checkbox" value = {30} onChange={filterDiscount} /><label>30% and above</label>
-                        <br/>
-                        <input type="checkbox" value = {40} onChange={filterDiscount} /><label>40% and above</label>
-                        <br/>
-                        <input type="checkbox" value = {50} onChange={filterDiscount}/><label>50% and above</label>
-                        <br/>
-                        <input type="checkbox" value = {60} onChange={filterDiscount}/><label>60% and above</label>
-                        <br/>
-                        <input type="checkbox" value = {70} onChange={filterDiscount}/><label>70% and above</label>
-                        <br/>
-                        <input type="checkbox" value = {80} onChange={filterDiscount}/><label>80% and above</label>
-                        <br/>
-                        <input type="checkbox" value = {90} onChange={filterDiscount}/><label>90% and above</label>
-                   </div>
-                   
-                </div>
-                <div className="rightDiv">
-                    {
-                        display.filter((name) =>{
-                                if (search === "") {
-                                    return productData;
-                                } else {
-                                    return name.category.toLowerCase().includes(search.toLowerCase());
-                                }
-                            }).map((e) => (
-                            <div className="mainBox" key={e._id}>
-                                <img className="prodImg" src={e.images} alt="" />
-                                <p style={{fontSize:"15px",fontWeight:"700"}}>{e.brand}</p>
-                                <p style={{lineHeight: "1%",color:"#323136",fontSize:"15px"}}>{e.category}</p>
-                                <div style={{ display: 'flex' }}><p style={{ fontSize: "15px", fontWeight: "700" }}>{"Rs. " + e.price}</p><p style={{ marginLeft: "2%", textDecoration: "line-through", fontSize: "13px" }}>{"Rs." + e.off_price}</p><p style={{ marginLeft: "4%", fontSize: "13px", color: "#FF905A" }}>({e.discount} %OFF)</p></div>
-                                <button className="cartBtn" onClick={() => {addCartItem(e)}}>ADD TO CART</button>
-                            </div>
-                        ))
-                    }
+  let totalOffPrice = 0;
+  let totalAmount = 0
+  for(var i = 0; i<cart.length; i++){
+    
+    totalOffPrice+=cart[i].qty * cart[i].off_price
+    totalAmount += cart[i].qty * cart[i].price
+      
+  }
+//   let totalAmount = totalPrice-disPrice;
 
-                </div>
-            </div>
-            
-       </div>
-   )
+
+const incrementQuantity = (id) => {
+    dispatch(increaseQty(id))
+}
+const decrementQuantity = (id) => {
+    dispatch(deccreaseQty(id))
 }
 
+  const [show, setshow] = useState(false);
+//   useEffect(() => {
+//     qtyInc()
+// },[]);
+
+
+  const handleChange = (e) => {
+      const {id, value} = e.target;
+      setCard({
+          ...card,
+          [id]: value
+      });
+  }
+
+  const Proceed = () => {
+    const {email, pin, country, firstName, lastName, address, city, state, phone, cardNumber, name, cvv, date} = card;
+    if(email && pin && country && firstName && lastName && address && city && state && phone && cardNumber && name && cvv && date){
+        navigate("/successful")
+    }else{
+        alert("Please fill all the details")
+    }
+  }
+  const ProceedToLogin = () => {
+    const {email, pin, country, firstName, lastName, address, city, state, phone, cardNumber, name, cvv, date} = card;
+    if(email && pin && country && firstName && lastName && address && city && state && phone && cardNumber && name && cvv && date){
+        navigate("/signup")
+    }else{
+        alert("Please fill all the details")
+    }
+  }
+
+  const handleSubmit = () => {
+    //   alert("Processing your payment")
+    //   dispatch(addOrder(card))
+      setshow(true);
+  }
+  const deleteItem = (id) => {
+    axios.delete(`https://myntra-updated.herokuapp.com/cart/${id}`)
+    .then((res) => dispatch(getCartData()));
+}
+  const qtyInc = (id) => {
+    let item = cart.findIndex((e) => e._id = id)
+    cart[item].qty += 1 
+      console.log("Dic Clicked ID", cart[item].qty)
+    //   setQty(qty+1)
+  }
+  const qtyDec = (id) => {
+    let item = cart.findIndex((e) => e._id = id)
+    cart[item].qty -= 1 
+      console.log("Dic Clicked ID", cart[item].qty)
+}
+    return  show ?  <Navigate to = {`/successful/`}></Navigate> : (
+    <div id="container">
+        <div id="content">
+            <div id="paymentDiv">
+                <header>
+                    <span id="headSpan1"> Information</span> <span id="headSpan2"> &gt; Payment</span>
+                </header>
+                <div>
+                    <h2>Contact information</h2>
+                    <div id="userInfo" className="field">
+                        <input id="email" className="inputs" onChange={handleChange} type="text" placeholder="Email ID"/>
+                    </div>
+                    {/* <div id="checkbox_input">
+                        <input id="box" type="checkbox"/>
+                        <label>Email me with news and offers</label>
+                    </div> */}
+                </div>
+                <div id="mainContent">
+                    <h2>Shipping address</h2>
+                    <div id="pincode" className="field">
+                        <h3></h3>
+                        <input id="pin" className="inputs" type="number" onChange={handleChange} placeholder="PIN code"/>
+                    </div>
+                    <div id="regionDiv" className="field">
+                        <p id="region">Country/region</p>
+                        <select id="country" onChange={handleChange} className="inputs">
+                            <option value="India">India</option>
+                        </select>
+                    </div>
+
+                    <div className="field names">
+                        <div id="first">
+                            <input id="firstName" className="inputs" onChange={handleChange} type="text" placeholder="First name"/>
+                        </div>
+                        <div id="second">
+                            <input id="lastName" className="inputs" onChange={handleChange} type="text" placeholder="Last name"/>
+                        </div>
+
+                    </div>
+                    <div id="addressDiv" className="field">
+                        <h3></h3>
+                        <input id="address" className="inputs" type="text" onChange={handleChange} placeholder="Address"/>
+                    </div>
+                    <div id="cityState" className="field names">
+                        <div id="cityDiv">
+                            <input id="city" className="inputs" type="text" onChange={handleChange} placeholder="City name"/>
+                        </div>
+                        <div id="stateDiv">
+                            <select id="state" className="inputs" onChange={handleChange} type="text" placeholder="State"> 
+                                <option value="">State</option>
+                                <option value="Andaman and Nicobar Islands">Andaman and Nicobar Islands</option>
+                                <option value="Andhra Pradesh">Andhra Pradesh</option>
+                                <option value="Arunachal Pradesh">Arunachal Pradesh</option>
+                                <option value="Assam">Assam</option>
+                                <option value="Bihar">Bihar</option>
+                                <option value="Chandigarh">Chandigarh</option>
+                                <option value="Chhattisgarh">Chhattisgarh</option>
+                                <option value="Dadra and Nagar Haveli">Dadra and Nagar Haveli</option>
+                                <option value="Daman and Diu">Daman and Diu</option>
+                                <option value="Delhi">Delhi</option>
+                                <option value="Goa">Goa</option>
+                                <option value="Gujarat">Gujarat</option>
+                                <option value="Haryana">Haryana</option>
+                                <option value="Himachal Pradesh">Himachal Pradesh</option>
+                                <option value="Jammu and Kashmir">Jammu and Kashmir</option>
+                                <option value="Jharkhand">Jharkhand</option>
+                                <option value="Karnataka">Karnataka</option>
+                                <option value="Kerala">Kerala</option>
+                                <option value="Ladakh">Ladakh</option>
+                                <option value="Lakshadweep">Lakshadweep</option>
+                                <option value="Madhya Pradesh">Madhya Pradesh</option>
+                                <option value="Maharashtra">Maharashtra</option>
+                                <option value="Manipur">Manipur</option>
+                                <option value="Meghalaya">Meghalaya</option>
+                                <option value="Mizoram">Mizoram</option>
+                                <option value="Nagaland">Nagaland</option>
+                                <option value="Odisha">Odisha</option>
+                                <option value="Puducherry">Puducherry</option>
+                                <option value="Punjab">Punjab</option>
+                                <option value="Rajasthan">Rajasthan</option>
+                                <option value="Sikkim">Sikkim</option>
+                                <option value="Tamil Nadu">Tamil Nadu</option>
+                                <option value="Telangana">Telangana</option>
+                                <option value="Tripura">Tripura</option>
+                                <option value="Uttar Pradesh">Uttar Pradesh</option>
+                                <option value="Uttarakhand">Uttarakhand</option>
+                                <option value="West Bengal">West Bengal</option>
+                        
+                            </select>
+                        </div>
+
+                    </div>
+                    <div id="phoneDiv" className="field">
+                        <h3></h3>
+                        <input id="phone" className="inputs" type="text" onChange={handleChange} placeholder="Phone"/>
+                    </div>
+
+                </div>
+                <div id="phoneDiv" className="field names">
+                    <input onChange = {handleChange} className="inputs" id = "cardNumber" type="number" placeholder = "Enter Debit card Number" required/>
+                    <input onChange = {handleChange} className="inputs" id = "name" type="text" placeholder = "Enter Name on Card" required/>
+                    <input onChange = {handleChange} className="inputs" id = "cvv" type="number" placeholder = "Enter CVV"  required/>
+                    <input onChange = {handleChange} className="inputs" id = "date" type="date" name="" placeholder = "Enter Card Expiry Date "  required/>
+                </div>
+                <div id="buttonDiv">
+                    {/* <button id="proceed" onClick={handleSubmit}>Proceed to pay</button> */}
+                    { isAuth == true ? <button onClick={() => Proceed()}id="payBtn">
+                    Proceed to Checkout
+                </button> : <button onClick={
+                        () => ProceedToLogin()
+                    }
+                    id="payBtn">
+                    Proceed to Checkout
+                </button>
+            }
+                </div>
+                <hr/>
+                <footer>
+                    <a href="">Refund policy</a>
+                    <a href="">Shipping policy</a>
+                    <a href="">Privacy policy</a>
+                    <a href="">Terms of service</a>
+                </footer>
+
+            </div>
+            <div id="itemsDiv">
+                <div className="order-summary">
+                {cart.map((e) => (
+                    <div className="cartItem">
+                        {/* {totalOffPrice+=e.qty * e.off_price}
+                        {totalAmount += e.qty * e.price} */}
+                        <img className="cartImg" src={e.images} alt="" />
+                        <div className="content">
+                            <p className="title">{e.title}</p>
+                            <p>Price: {e.price}/-</p>
+                            {/* <p>Brand: {e.brand}</p>
+                            <p>Color: {e.color}</p> */}
+
+                            <div style={{
+                                display: "flex",
+                                justifyContent: "center"
+                            }}>
+                                <p>Quantity: </p>
+                                <button  className="small" onClick={() =>  decrementQuantity(e._id)}>-</button>
+                                <p> { e.qty } </p>
+                                <button className="small" onClick={() => incrementQuantity(e._id)}>+</button>
+                            </div>
+                            <button id = "deleteBtn" onClick={()=>deleteItem(e._id)}>Remove</button>
+                        </div>
+                    </div>
+                ))}
+                {/* <CartContext.Provider
+                    value={{ ...state, clearCart, removeItem, increment, decrement }}>
+                    <ContextCart />
+                </CartContext.Provider> */}
+                </div>
+                <br />
+                <h3>PRICE DETAILS ({cart.length} Items)</h3>
+            <div style={{
+                border: "1px solid gray"
+            }}>
+                <div className="price">
+                    <p>Total MRP</p>
+                    <p>{totalOffPrice}/-</p>
+                </div>
+                <div className="price">
+                    <p>Discount on MRP</p>
+                    <p>{totalOffPrice-totalAmount}/-</p>
+                </div>
+                <div className="price">
+                    <p>Coupon Discount</p>
+                    <p className="coupon">Apply Coupon</p>
+                </div>
+                <div className="price">
+                    <p>Early Access Fee</p>
+                    <p>99/-</p>
+                </div>
+                <div className="price">
+                    <p>Convenience Fee <strong>Know more</strong></p>
+                    <p><strike>99/-</strike> FREE</p>
+                </div>
+                <hr />
+                <div className="price">
+                    <p>Total Amount</p>
+                    <p>{totalAmount}/-</p>
+                </div>
+                {/* <button className="place" onClick={Payment}>Make Payment</button> */}
+            </div>    
+                <div className="total">
+                    <Link to={"/login"}><button className="log-in">LOGIN / REGISTER</button></Link>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    )
+}
