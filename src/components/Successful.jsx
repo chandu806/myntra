@@ -12,4 +12,5 @@ export const Successful = () => {
 
         </div>
     )
+    
 }
